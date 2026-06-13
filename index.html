@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roleta da Produtividade</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+font-family:Arial,sans-serif;
+background:
+radial-gradient(circle at top left,#fff,#ffd6ec,#ff8ac8),
+linear-gradient(180deg,#ffe6f3,#ffb6df,#ff55a1);
+color:#7a2857;
+min-height:100vh;
+overflow-x:hidden;
+}
+
+body::before{
+content:"♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡";
+position:fixed;
+inset:0;
+font-size:35px;
+line-height:95px;
+word-spacing:30px;
+opacity:.10;
+color:#ff1493;
+pointer-events:none;
+z-index:-1;
+}
+
+.container{
+max-width:520px;
+margin:auto;
+padding:22px;
+min-height:100vh;
+}
+
+.card{
+background:rgba(255,255,255,.88);
+border-radius:30px;
+padding:22px;
+margin-top:18px;
+box-shadow:0 14px 35px rgba(255,20,147,.25);
+border:1px solid rgba(255,255,255,.85);
+}
+
+h1,h2{
+text-align:center;
+color:#d6007f;
+margin-top:10px;
+}
+
+.sub{
+text-align:center;
+color:#9b3b70;
+font-weight:bold;
+margin-top:8px;
+}
+
+.logo{
+font-size:55px;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:15px;
+margin-top:12px;
+border-radius:18px;
+border:1px solid #ff9ed0;
+background:#fff7fb;
+font-size:15px;
+color:#7a2857;
+}
+
+button{
+border:none;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn{
+width:100%;
+padding:15px;
+margin-top:14px;
+border-radius:20px;
+background:linear-gradient(135deg,#ff1493,#ff69b4,#ffc2e2);
+color:white;
+font-size:16px;
+box-shadow:0 8px 22px rgba(255,20,147,.35);
+}
+
+.btn-light{
+background:white;
+color:#d6007f;
+border:2px solid #ff9ed0;
+}
+
+.roletaBox{
+position:relative;
+display:flex;
+justify-content:center;
+align-items:center;
+margin:30px 0;
+}
+
+.roletaBox::before{
+content:"";
+position:absolute;
+width:330px;
+height:330px;
+border-radius:50%;
+background:radial-gradient(circle,rgba(255,20,147,.35),transparent 65%);
+filter:blur(10px);
+animation:brilhar 1.8s infinite alternate;
+}
+
+@keyframes brilhar{
+from{transform:scale(.95);opacity:.55}
+to{transform:scale(1.08);opacity:1}
+}
+
+.seta{
+position:absolute;
+top:-8px;
+z-index:4;
+width:0;
+height:0;
+border-left:18px solid transparent;
+border-right:18px solid transparent;
+border-top:35px solid #d6007f;
+filter:drop-shadow(0 4px 5px rgba(0,0,0,.25));
+}
+
+.roleta{
+width:300px;
+height:300px;
+border-radius:50%;
+background:conic-gradient(
+#ff1493 0deg 45deg,
+#ff85cc 45deg 90deg,
+#dbb6ee 90deg 135deg,
+#ff55a1 135deg 180deg,
+#ffc2e2 180deg 225deg,
+#ff1493 225deg 270deg,
+#ff85cc 270deg 315deg,
+#dbb6ee 315deg 360deg
+);
+border:8px solid white;
+box-shadow:0 0 30px rgba(255,20,147,.55);
+display:flex;
+align-items:center;
+justify-content:center;
+transition:transform 4s cubic-bezier(.17,.67,.14,1);
+position:relative;
+z-index:2;
+overflow:hidden;
+}
+
+.roleta::after{
+content:"♡";
+position:absolute;
+font-size:90px;
+color:white;
+text-shadow:0 0 15px rgba(255,255,255,.9);
+}
+
+.centro{
+position:absolute;
+width:95px;
+height:95px;
+border-radius:50%;
+background:white;
+z-index:3;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:bold;
+color:#d6007f;
+box-shadow:0 0 18px rgba(255,20,147,.35);
+text-align:center;
+font-size:13px;
+}
+
+.resultado{
+background:#fff0f8;
+border:2px dashed #ff69b4;
+padding:16px;
+border-radius:20px;
+text-align:center;
+font-weight:bold;
+color:#c90076;
+font-size:18px;
+margin-top:15px;
+}
+
+.tarefa{
+display:grid;
+grid-template-columns:1fr 40px;
+gap:8px;
+align-items:center;
+background:#fff7fb;
+border:1px solid #ffc1df;
+border-radius:16px;
+padding:12px;
+margin-top:8px;
+}
+
+.tarefa span{
+font-weight:bold;
+}
+
+.delete{
+background:#ff4f8b;
+color:white;
+border-radius:12px;
+padding:9px;
+}
+
+.resumo{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+margin-top:15px;
+}
+
+.boxResumo{
+background:#fff0f8;
+border-radius:18px;
+padding:14px;
+text-align:center;
+border:1px solid #ffc1df;
+}
+
+.valor{
+font-size:24px;
+font-weight:bold;
+color:#d6007f;
+margin-top:5px;
+}
+
+.barra{
+height:14px;
+background:#ffe1f1;
+border-radius:999px;
+overflow:hidden;
+margin-top:12px;
+}
+
+.progresso{
+height:100%;
+width:0%;
+background:linear-gradient(135deg,#ff1493,#ff69b4);
+border-radius:999px;
+transition:.3s;
+}
+
+.historico{
+background:#fff7fb;
+border-left:5px solid #ff1493;
+border-radius:16px;
+padding:12px;
+margin-top:8px;
+color:#7a2857;
+font-weight:bold;
+}
+
+footer{
+text-align:center;
+font-size:12px;
+font-weight:bold;
+margin-top:22px;
+color:#7a2857;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">💖</div>
+<h1>Roleta da Produtividade</h1>
+<p class="sub">Adicione suas tarefas e deixe a roleta escolher por você</p>
+
+<div class="card">
+<h2>Minha roleta</h2>
+
+<div class="roletaBox">
+<div class="seta"></div>
+<div class="roleta" id="roleta"></div>
+<div class="centro">GIRAR</div>
+</div>
+
+<button class="btn" onclick="girar()">Girar roleta ✨</button>
+
+<div class="resultado" id="resultado">
+Nenhuma tarefa sorteada ainda.
+</div>
+
+<button class="btn btn-light" onclick="concluir()">Concluí essa tarefa</button>
+</div>
+
+<div class="card">
+<h2>Adicionar tarefa</h2>
+
+<input type="text" id="novaTarefa" placeholder="Ex: lavar louça, estudar, arrumar cama...">
+
+<button class="btn" onclick="adicionarTarefa()">Adicionar na roleta</button>
+</div>
+
+<div class="card">
+<h2>Resumo</h2>
+
+<div class="resumo">
+<div class="boxResumo">
+<div>Pontos</div>
+<div class="valor" id="pontos">0</div>
+</div>
+
+<div class="boxResumo">
+<div>Concluídas</div>
+<div class="valor" id="concluidas">0</div>
+</div>
+</div>
+
+<div class="resultado" id="nivel">
+Nível: Iniciante
+</div>
+
+<div class="barra">
+<div class="progresso" id="progresso"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Tarefas na roleta</h2>
+<div id="listaTarefas"></div>
+</div>
+
+<div class="card">
+<h2>Histórico</h2>
+<div id="historico"></div>
+</div>
+
+<footer>Roleta da Produtividade Rosa 💖</footer>
+
+</div>
+
+<script>
+let tarefas = JSON.parse(localStorage.getItem("tarefasRoletaRosa")) || [
+"Lavar louça",
+"Arrumar a cama",
+"Organizar o quarto",
+"Estudar 20 minutos",
+"Beber água",
+"Limpar banheiro"
+];
+
+let pontos = Number(localStorage.getItem("pontosRoletaRosa")) || 0;
+let concluidas = Number(localStorage.getItem("concluidasRoletaRosa")) || 0;
+let historico = JSON.parse(localStorage.getItem("historicoRoletaRosa")) || [];
+let tarefaAtual = "";
+let rotacao = 0;
+
+function salvar(){
+localStorage.setItem("tarefasRoletaRosa", JSON.stringify(tarefas));
+localStorage.setItem("pontosRoletaRosa", pontos);
+localStorage.setItem("concluidasRoletaRosa", concluidas);
+localStorage.setItem("historicoRoletaRosa", JSON.stringify(historico));
+}
+
+function adicionarTarefa(){
+let texto = document.getElementById("novaTarefa").value.trim();
+
+if(!texto){
+alert("Digite uma tarefa.");
+return;
+}
+
+tarefas.push(texto);
+document.getElementById("novaTarefa").value="";
+salvar();
+renderizar();
+}
+
+function excluirTarefa(index){
+tarefas.splice(index,1);
+salvar();
+renderizar();
+}
+
+function girar(){
+if(tarefas.length === 0){
+alert("Adicione pelo menos uma tarefa.");
+return;
+}
+
+let sorteada = Math.floor(Math.random() * tarefas.length);
+tarefaAtual = tarefas[sorteada];
+
+rotacao += 1440 + Math.floor(Math.random() * 720);
+
+document.getElementById("roleta").style.transform =
+`rotate(${rotacao}deg)`;
+
+setTimeout(()=>{
+document.getElementById("resultado").innerText =
+"Faça agora: " + tarefaAtual + " 💖";
+},3900);
+}
+
+function concluir(){
+if(!tarefaAtual){
+alert("Gire a roleta primeiro.");
+return;
+}
+
+pontos += 10;
+concluidas += 1;
+
+historico.unshift({
+tarefa:tarefaAtual,
+data:new Date().toLocaleString("pt-BR")
+});
+
+if(historico.length > 10){
+historico.pop();
+}
+
+tarefaAtual="";
+document.getElementById("resultado").innerText =
+"Tarefa concluída! +10 pontos ✨";
+
+salvar();
+renderizar();
+}
+
+function nivelAtual(){
+if(pontos >= 500) return "Rainha da Produtividade";
+if(pontos >= 300) return "Nível Ouro";
+if(pontos >= 150) return "Nível Prata";
+if(pontos >= 50) return "Nível Bronze";
+return "Iniciante";
+}
+
+function renderizar(){
+let lista = document.getElementById("listaTarefas");
+lista.innerHTML="";
+
+tarefas.forEach((t,index)=>{
+lista.innerHTML += `
+<div class="tarefa">
+<span>${t}</span>
+<button class="delete" onclick="excluirTarefa(${index})">x</button>
+</div>
+`;
+});
+
+document.getElementById("pontos").innerText = pontos;
+document.getElementById("concluidas").innerText = concluidas;
+document.getElementById("nivel").innerText = "Nível: " + nivelAtual();
+
+let progresso = Math.min((pontos % 100),100);
+document.getElementById("progresso").style.width = progresso + "%";
+
+let hist = document.getElementById("historico");
+hist.innerHTML="";
+
+if(historico.length === 0){
+hist.innerHTML="<p class='sub'>Nenhuma tarefa concluída ainda.</p>";
+return;
+}
+
+historico.forEach(h=>{
+hist.innerHTML += `
+<div class="historico">
+${h.tarefa}<br>
+<small>${h.data}</small>
+</div>
+`;
+});
+}
+
+renderizar();
+</script>
+
+</body>
+</html>
