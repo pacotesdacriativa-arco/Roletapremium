@@ -32,7 +32,7 @@ z-index:-1;
 }
 
 .container{
-max-width:520px;
+max-width:540px;
 margin:auto;
 padding:22px;
 min-height:100vh;
@@ -105,16 +105,17 @@ display:flex;
 justify-content:center;
 align-items:center;
 margin:30px 0;
+min-height:350px;
 }
 
 .roletaBox::before{
 content:"";
 position:absolute;
-width:330px;
-height:330px;
+width:350px;
+height:350px;
 border-radius:50%;
-background:radial-gradient(circle,rgba(255,20,147,.35),transparent 65%);
-filter:blur(10px);
+background:radial-gradient(circle,rgba(255,20,147,.38),transparent 65%);
+filter:blur(12px);
 animation:brilhar 1.8s infinite alternate;
 }
 
@@ -125,56 +126,42 @@ to{transform:scale(1.08);opacity:1}
 
 .seta{
 position:absolute;
-top:-8px;
-z-index:4;
+top:0;
+z-index:5;
 width:0;
 height:0;
-border-left:18px solid transparent;
-border-right:18px solid transparent;
-border-top:35px solid #d6007f;
+border-left:20px solid transparent;
+border-right:20px solid transparent;
+border-top:38px solid #d6007f;
 filter:drop-shadow(0 4px 5px rgba(0,0,0,.25));
 }
 
-.roleta{
-width:300px;
-height:300px;
+.canvasWrap{
+width:320px;
+height:320px;
 border-radius:50%;
-background:conic-gradient(
-#ff1493 0deg 45deg,
-#ff85cc 45deg 90deg,
-#dbb6ee 90deg 135deg,
-#ff55a1 135deg 180deg,
-#ffc2e2 180deg 225deg,
-#ff1493 225deg 270deg,
-#ff85cc 270deg 315deg,
-#dbb6ee 315deg 360deg
-);
 border:8px solid white;
-box-shadow:0 0 30px rgba(255,20,147,.55);
-display:flex;
-align-items:center;
-justify-content:center;
-transition:transform 4s cubic-bezier(.17,.67,.14,1);
+box-shadow:0 0 35px rgba(255,20,147,.60);
 position:relative;
 z-index:2;
 overflow:hidden;
+transition:transform 4s cubic-bezier(.17,.67,.14,1);
+background:white;
 }
 
-.roleta::after{
-content:"♡";
-position:absolute;
-font-size:90px;
-color:white;
-text-shadow:0 0 15px rgba(255,255,255,.9);
+canvas{
+width:100%;
+height:100%;
+display:block;
 }
 
 .centro{
 position:absolute;
-width:95px;
-height:95px;
+width:90px;
+height:90px;
 border-radius:50%;
 background:white;
-z-index:3;
+z-index:4;
 display:flex;
 align-items:center;
 justify-content:center;
@@ -183,6 +170,7 @@ color:#d6007f;
 box-shadow:0 0 18px rgba(255,20,147,.35);
 text-align:center;
 font-size:13px;
+border:3px solid #ff9ed0;
 }
 
 .resultado{
@@ -268,6 +256,14 @@ color:#7a2857;
 font-weight:bold;
 }
 
+.aviso{
+font-size:13px;
+text-align:center;
+margin-top:10px;
+color:#9b3b70;
+font-weight:bold;
+}
+
 footer{
 text-align:center;
 font-size:12px;
@@ -284,14 +280,18 @@ color:#7a2857;
 
 <div class="logo">💖</div>
 <h1>Roleta da Produtividade</h1>
-<p class="sub">Adicione suas tarefas e deixe a roleta escolher por você</p>
+<p class="sub">Adicione até 40 tarefas e deixe a roleta escolher</p>
 
 <div class="card">
 <h2>Minha roleta</h2>
 
 <div class="roletaBox">
 <div class="seta"></div>
-<div class="roleta" id="roleta"></div>
+
+<div class="canvasWrap" id="canvasWrap">
+<canvas id="roletaCanvas" width="700" height="700"></canvas>
+</div>
+
 <div class="centro">GIRAR</div>
 </div>
 
@@ -302,6 +302,10 @@ Nenhuma tarefa sorteada ainda.
 </div>
 
 <button class="btn btn-light" onclick="concluir()">Concluí essa tarefa</button>
+
+<p class="aviso">
+Ao concluir, a tarefa sai automaticamente da roleta.
+</p>
 </div>
 
 <div class="card">
@@ -351,7 +355,7 @@ Nível: Iniciante
 </div>
 
 <script>
-let tarefas = JSON.parse(localStorage.getItem("tarefasRoletaRosa")) || [
+let tarefas = JSON.parse(localStorage.getItem("tarefasRoletaRosaCanvas")) || [
 "Lavar louça",
 "Arrumar a cama",
 "Organizar o quarto",
@@ -360,17 +364,109 @@ let tarefas = JSON.parse(localStorage.getItem("tarefasRoletaRosa")) || [
 "Limpar banheiro"
 ];
 
-let pontos = Number(localStorage.getItem("pontosRoletaRosa")) || 0;
-let concluidas = Number(localStorage.getItem("concluidasRoletaRosa")) || 0;
-let historico = JSON.parse(localStorage.getItem("historicoRoletaRosa")) || [];
+let pontos = Number(localStorage.getItem("pontosRoletaRosaCanvas")) || 0;
+let concluidas = Number(localStorage.getItem("concluidasRoletaRosaCanvas")) || 0;
+let historico = JSON.parse(localStorage.getItem("historicoRoletaRosaCanvas")) || [];
+
 let tarefaAtual = "";
+let tarefaAtualIndex = null;
 let rotacao = 0;
+let girando = false;
+
+const cores = [
+"#ff1493",
+"#ff85cc",
+"#dbb6ee",
+"#ff55a1",
+"#ffc2e2",
+"#ff69b4",
+"#d946ef",
+"#f9a8d4"
+];
 
 function salvar(){
-localStorage.setItem("tarefasRoletaRosa", JSON.stringify(tarefas));
-localStorage.setItem("pontosRoletaRosa", pontos);
-localStorage.setItem("concluidasRoletaRosa", concluidas);
-localStorage.setItem("historicoRoletaRosa", JSON.stringify(historico));
+localStorage.setItem("tarefasRoletaRosaCanvas", JSON.stringify(tarefas));
+localStorage.setItem("pontosRoletaRosaCanvas", pontos);
+localStorage.setItem("concluidasRoletaRosaCanvas", concluidas);
+localStorage.setItem("historicoRoletaRosaCanvas", JSON.stringify(historico));
+}
+
+function cortarTexto(texto, max){
+return texto.length > max ? texto.slice(0,max-3) + "..." : texto;
+}
+
+function desenharRoleta(){
+let canvas = document.getElementById("roletaCanvas");
+let ctx = canvas.getContext("2d");
+let w = canvas.width;
+let h = canvas.height;
+let cx = w/2;
+let cy = h/2;
+let raio = 330;
+
+ctx.clearRect(0,0,w,h);
+
+if(tarefas.length === 0){
+ctx.beginPath();
+ctx.arc(cx,cy,raio,0,Math.PI*2);
+ctx.fillStyle="#ffc2e2";
+ctx.fill();
+
+ctx.fillStyle="#c90076";
+ctx.font="bold 34px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+ctx.fillText("Adicione tarefas",cx,cy);
+return;
+}
+
+let fatia = (Math.PI*2) / tarefas.length;
+
+for(let i=0;i<tarefas.length;i++){
+let inicio = i * fatia - Math.PI/2;
+let fim = inicio + fatia;
+
+ctx.beginPath();
+ctx.moveTo(cx,cy);
+ctx.arc(cx,cy,raio,inicio,fim);
+ctx.closePath();
+ctx.fillStyle = cores[i % cores.length];
+ctx.fill();
+
+ctx.strokeStyle="rgba(255,255,255,.75)";
+ctx.lineWidth=3;
+ctx.stroke();
+
+ctx.save();
+ctx.translate(cx,cy);
+ctx.rotate(inicio + fatia/2);
+
+ctx.textAlign="right";
+ctx.textBaseline="middle";
+ctx.fillStyle="white";
+
+let fonte = tarefas.length <= 10 ? 26 : tarefas.length <= 20 ? 21 : tarefas.length <= 30 ? 17 : 14;
+let maxTexto = tarefas.length <= 10 ? 18 : tarefas.length <= 20 ? 15 : tarefas.length <= 30 ? 12 : 10;
+
+ctx.font=`bold ${fonte}px Arial`;
+ctx.shadowColor="rgba(0,0,0,.35)";
+ctx.shadowBlur=4;
+
+ctx.fillText(cortarTexto(tarefas[i],maxTexto),raio-25,0);
+
+ctx.restore();
+}
+
+ctx.beginPath();
+ctx.arc(cx,cy,55,0,Math.PI*2);
+ctx.fillStyle="white";
+ctx.fill();
+
+ctx.fillStyle="#d6007f";
+ctx.font="bold 24px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+ctx.fillText("♡",cx,cy);
 }
 
 function adicionarTarefa(){
@@ -381,6 +477,11 @@ alert("Digite uma tarefa.");
 return;
 }
 
+if(tarefas.length >= 40){
+alert("A roleta já tem 40 tarefas. Conclua ou exclua alguma para adicionar mais.");
+return;
+}
+
 tarefas.push(texto);
 document.getElementById("novaTarefa").value="";
 salvar();
@@ -388,33 +489,51 @@ renderizar();
 }
 
 function excluirTarefa(index){
+if(tarefaAtualIndex === index){
+tarefaAtual="";
+tarefaAtualIndex=null;
+document.getElementById("resultado").innerText="Tarefa removida da roleta.";
+}
+
 tarefas.splice(index,1);
 salvar();
 renderizar();
 }
 
 function girar(){
+if(girando) return;
+
 if(tarefas.length === 0){
 alert("Adicione pelo menos uma tarefa.");
 return;
 }
 
+girando = true;
+
 let sorteada = Math.floor(Math.random() * tarefas.length);
 tarefaAtual = tarefas[sorteada];
+tarefaAtualIndex = sorteada;
 
-rotacao += 1440 + Math.floor(Math.random() * 720);
+let fatiaGraus = 360 / tarefas.length;
+let centroFatia = sorteada * fatiaGraus + fatiaGraus/2;
 
-document.getElementById("roleta").style.transform =
+let destino = 360 - centroFatia;
+let voltas = 1440 + Math.floor(Math.random() * 720);
+
+rotacao = voltas + destino;
+
+document.getElementById("canvasWrap").style.transform =
 `rotate(${rotacao}deg)`;
 
 setTimeout(()=>{
 document.getElementById("resultado").innerText =
 "Faça agora: " + tarefaAtual + " 💖";
-},3900);
+girando = false;
+},4100);
 }
 
 function concluir(){
-if(!tarefaAtual){
+if(!tarefaAtual || tarefaAtualIndex === null){
 alert("Gire a roleta primeiro.");
 return;
 }
@@ -431,9 +550,13 @@ if(historico.length > 10){
 historico.pop();
 }
 
+tarefas.splice(tarefaAtualIndex,1);
+
 tarefaAtual="";
+tarefaAtualIndex=null;
+
 document.getElementById("resultado").innerText =
-"Tarefa concluída! +10 pontos ✨";
+"Tarefa concluída e removida da roleta! +10 pontos ✨";
 
 salvar();
 renderizar();
@@ -448,9 +571,14 @@ return "Iniciante";
 }
 
 function renderizar(){
+desenharRoleta();
+
 let lista = document.getElementById("listaTarefas");
 lista.innerHTML="";
 
+if(tarefas.length === 0){
+lista.innerHTML="<p class='sub'>Todas as tarefas foram concluídas. Adicione novas tarefas.</p>";
+}else{
 tarefas.forEach((t,index)=>{
 lista.innerHTML += `
 <div class="tarefa">
@@ -459,6 +587,7 @@ lista.innerHTML += `
 </div>
 `;
 });
+}
 
 document.getElementById("pontos").innerText = pontos;
 document.getElementById("concluidas").innerText = concluidas;
